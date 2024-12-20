@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>NOW - Streaming</title>
+   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+   <link href="https://unpkg.com/plyr@3/dist/plyr.css" rel="stylesheet">
+   <script src="https://unpkg.com/plyr@3/dist/plyr.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+   <style>
+       /* Tout votre CSS existant reste identique */
+       * {
+           margin: 0;
+           padding: 0;
+           box-sizing: border-box;
+       }
+        body {
+           background-color: #141414;
+           color: #fff;
+           font-family: 'Roboto', sans-serif;
+       }
+        #loginPage {
+           height: 100vh;
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+               url('https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=1920&q=80');
+           background-size: cover;
+           background-position: center;
+       }
+        .login-container {
+           background: rgba(0,0,0,0.8);
+           padding: 40px;
+           border-radius: 10px;
+           width: 100%;
+           max-width: 400px;
+       }
+        .login-container h2 {
+           text-align: center;
+           margin-bottom: 30px;
+       }
+        .login-input {
+           width: 100%;
+           padding: 10px;
+           margin-bottom: 20px;
+           border-radius: 5px;
+           border: none;
+           background: rgba(255,255,255,0.1);
+           color: white;
+       }
+        .login-button {
+           width: 100%;
+           padding: 10px;
+           border-radius: 5px;
+           border: none;
+           background: #fff;
+           color: #000;
+           cursor: pointer;
+           font-weight: bold;
+       }
+        #errorMessage {
+           color: red;
+           text-align: center;
+           margin-top: 10px;
+       }
+        .navbar {
+           position: fixed;
+           top: 0;
+           width: 100%;
+           background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+           padding: 15px 4%;
+           z-index: 1000;
+           display: flex;
+           align-items: center;
+           transition: all 0.3s ease;
+       }
+        .navbar.scrolled {
+           background: rgba(0,0,0,0.95);
+           box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+       }
+        .logo {
+           font-size: 32px;
+           font-weight: 700;
+           color: #fff;
+           text-decoration: none;
+           letter-spacing: 2px;
+           margin-right: 25px;
+           cursor: pointer;
+       }
+        .nav-links {
+           display: flex;
+           gap: 30px;
+       }
+        .nav-links a {
+           color: #fff;
+           text-decoration: none;
+           font-size: 16px;
+           font-weight: 500;
+           cursor: pointer;
+           transition: all 0.3s ease;
+           position: relative;
+       }
+        .nav-links a:after {
+           content: '';
+           position: absolute;
+           bottom: -5px;
+           left: 0;
+           width: 0;
+           height: 2px;
+           background: #fff;
+           transition: width 0.3s ease;
+       }
+        .nav-links a:hover:after {
+           width: 100%;
+       }
+        .search-bar {
+           margin-left: auto;
+           display: flex;
+           align-items: center;
+           gap: 10px;
+       }
+        .search-bar input {
+           padding: 10px 20px;
+           border-radius: 25px;
+           border: none;
+           background: rgba(255,255,255,0.2);
+           color: white;
+           width: 300px;
+           font-size: 14px;
+           transition: all 0.3s ease;
+       }
+        .search-bar input:focus {
+           background: rgba(255,255,255,0.3);
+           outline: none;
+           width: 350px;
+       }
+        .hero {
+           height: 80vh;
+           position: relative;
+           display: flex;
+           align-items: center;
+           padding: 0 4%;
+           margin-bottom: 20px;
+           transition: all 0.5s ease;
+           background-size: cover;
+           background-position: center;
+           background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+               url('https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=1920&q=80');
+       }
+        .hero-content {
+           max-width: 650px;
+           z-index: 1;
+       }
+        .hero h1 {
+           font-size: 48px;
+           font-weight: 700;
+           margin-bottom: 20px;
+           text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+       }
+        .hero p {
+           font-size: 20px;
+           margin-bottom: 30px;
+           color: #e5e5e5;
+           text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+       }
+        .content {
+           padding: 20px 4%;
+       }
+        .section {
+           margin-top: 80px;
+           margin-bottom: 40px;
+       }
+        #home.section {
+           margin-top: 0;
+       }
+        .category-preview {
+           margin-bottom: 40px;
+           text-align: center;
+           max-width: 1200px;
+           margin-left: auto;
+           margin-right: auto;
+       }
+        h2 {
+           font-size: 28px;
+           font-weight: 600;
+           padding: 20px 0;
+           color: #fff;
+           text-align: center;
+       }
+        .grid {
+           display: grid;
+           grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+           gap: 25px;
+           padding: 10px 0;
+           justify-items: center;
+           margin: 0 auto;
+           max-width: 1200px;
+       }
+        .see-more {
+           text-align: center;
+           margin-top: 20px;
+       }
+        .see-more-btn {
+           background: rgba(255,255,255,0.1);
+           color: #fff;
+           border: 2px solid #fff;
+           padding: 10px 25px;
+           border-radius: 25px;
+           cursor: pointer;
+           font-weight: 500;
+           transition: all 0.3s ease;
+       }
+        .see-more-btn:hover {
+           background: rgba(255,255,255,0.2);
+           transform: scale(1.05);
+       }
+        .plyr {
+           width: 100%;
+           height: 100%;
+           --plyr-color-main: #fff;
+       }
+        .movie-card {
+           position: relative;
+           border-radius: 8px;
+           overflow: hidden;
+           transition: all 0.3s ease;
+           cursor: pointer;
+           box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+           aspect-ratio: 2/3;
+           width: 100%;
+       }
+        .movie-card:hover {
+           transform: scale(1.05);
+           box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+       }
+        .movie-card img {
+           width: 100%;
+           height: 100%;
+           object-fit: cover;
+           transition: all 0.3s ease;
+       }
+        .channel-card {
+           position: relative;
+           background: rgba(255,255,255,0.1);
+           border-radius: 8px;
+           overflow: hidden;
+           transition: all 0.3s ease;
+           cursor: pointer;
+           box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+           aspect-ratio: 16/9;
+           padding: 20px;
+           display: flex;
+           flex-direction: column;
+           justify-content: center;
+           align-items: center;
+           backdrop-filter: blur(5px);
+           width: 100%;
+       }
+        .channel-card:hover {
+           transform: scale(1.05);
+           box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+           background: rgba(255,255,255,0.2);
+       }
+        .channel-card img {
+           width: 80%;
+           height: 60%;
+           object-fit: contain;
+           transition: all 0.3s ease;
+       }
+        .channel-info {
+           text-align: center;
+           margin-top: 15px;
+       }
+        .channel-name {
+           font-size: 16px;
+           font-weight: 500;
+           margin-bottom: 10px;
+           color: #fff;
+       }
+        .live-badge {
+           background: #fff;
+           color: #000;
+           padding: 4px 8px;
+           border-radius: 4px;
+           font-size: 12px;
+           font-weight: 500;
+       }
+        .movie-info {
+           position: absolute;
+           bottom: 0;
+           left: 0;
+           right: 0;
+           padding: 20px;
+           background: linear-gradient(transparent, rgba(0,0,0,0.9));
+           transform: translateY(100%);
+           transition: transform 0.3s ease;
+       }
+        .movie-card:hover .movie-info {
+           transform: translateY(0);
+       }
+        .movie-title {
+           font-size: 16px;
+           font-weight: 500;
+           margin-bottom: 10px;
+       }
+        .watch-btn {
+           background: #fff;
+           color: #000;
+           border: none;
+           padding: 8px 16px;
+           border-radius: 4px;
+           cursor: pointer;
+           font-weight: 500;
+           transition: all 0.3s ease;
+       }
+        .watch-btn:hover {
+           background: rgba(255,255,255,0.8);
+           transform: scale(1.05);
+       }
+        #videoModal {
+           display: none;
+           position: fixed;
+           top: 0;
+           left: 0;
+           width: 100%;
+           height: 100%;
+           background: rgba(0,0,0,0.95);
+           z-index: 2000;
+           opacity: 0;
+           transition: opacity 0.3s ease;
+       }
+        #videoModal.active {
+           opacity: 1;
+       }
+        .modal-content {
+           position: relative;
+           width: 90%;
+           max-width: 1200px;
+           margin: 40px auto;
+       }
+        .video-wrapper {
+           position: relative;
+           width: 100%;
+           height: 100%;
+           max-width: 1200px;
+           margin: auto;
+           aspect-ratio: 16/9;
+       }
+        .video-wrapper iframe,
+       .video-wrapper video {
+           position: absolute;
+           top: 0;
+           left: 0;
+           width: 100%;
+           height: 100%;
+           border: none;
+           border-radius: 8px;
+       }
+        .close-btn {
+           position: absolute;
+           top: -40px;
+           right: -40px;
+           color: white;
+           font-size: 40px;
+           cursor: pointer;
+           background: none;
+           border: none;
+           transition: all 0.3s ease;
+       }
+        .close-btn:hover {
+           color: rgba(255,255,255,0.8);
+           transform: scale(1.1);
+       }
+        @media (max-width: 768px) {
+           .grid {
+               grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+           }
+           .search-bar input {
+               width: 200px;
+           }
+           .search-bar input:focus {
+               width: 250px;
+           }
+           .hero h1 {
+               font-size: 36px;
+           }
+           .hero p {
+               font-size: 16px;
+           }
+           .logo {
+               font-size: 24px;
+           }
+       }
+   </style>
+</head>
+<body>
+   <div id="loginPage">
+       <div class="login-container">
+           <h2>Connexion</h2>
+           <form id="loginForm" onsubmit="return login(event)">
+               <input type="text" id="username" placeholder="Nom d'utilisateur" class="login-input">
+               <input type="password" id="password" placeholder="Mot de passe" class="login-input">
+               <button type="submit" class="login-button">Se connecter</button>
+           </form>
+           <p id="errorMessage"></p>
+       </div>
+   </div>
+   <nav class="navbar" style="display: none;">
+       <a class="logo" onclick="showSection('home')">NOW</a>
+       <div class="nav-links">
+           <a onclick="showSection('movies')">Films</a>
+           <a onclick="showSection('tv')">TV en Direct</a>
+       </div>
+       <div class="search-bar">
+           <input type="text" id="searchInput" placeholder="Rechercher un film ou une chaîne...">
+       </div>
+   </nav>
+    <div class="hero" id="hero" style="display: none;">
+       <div class="hero-content">
+           <h1 id="heroTitle">Streaming Illimité</h1>
+           <p id="heroDescription">Les meilleurs films et chaînes TV en streaming HD.</p>
+       </div>
+   </div>
+    <div class="content" style="display: none;">
+       <section id="home" class="section">
+           <div class="category-preview">
+               <h2>Films du moment</h2>
+               <div class="grid" id="popularMoviesGrid"></div>
+               <div class="see-more">
+                   <button class="see-more-btn" onclick="showSection('movies')">Voir plus de films</button>
+               </div>
+           </div>
+            <div class="category-preview">
+               <h2>Chaînes TV</h2>
+               <div class="grid" id="popularChannelsGrid"></div>
+               <div class="see-more">
+                   <button class="see-more-btn" onclick="showSection('tv')">Voir plus de chaînes</button>
+               </div>
+           </div>
+       </section>
+        <section id="movies" class="section" style="display: none;">
+           <h2>Films</h2>
+           <div class="grid" id="moviesGrid"></div>
+       </section>
+        <section id="tv" class="section" style="display: none;">
+           <h2>TV en Direct</h2>
+           <div class="grid" id="channelsGrid"></div>
+           <div class="see-more" style="margin-top: 30px;">
+               <button class="see-more-btn" onclick="openHuhuTV()">Voir toutes les chaînes du monde</button>
+           </div>
+       </section>
+   </div>
+    <div id="videoModal" style="display: none;">
+       <div class="modal-content">
+           <button class="close-btn" onclick="closeVideo()">&times;</button>
+           <div class="video-wrapper" id="videoContainer"></div>
+       </div>
+   </div>
+    <script>
+
+        const movies = [
+            {
+                title: "Small Things Like These",
+                image: "https://media.themoviedb.org/t/p/original/8wNtNXEf4KRz1Z5A3GhqodWKeUs.jpg",
+                videoUrl: "https://tromcloud.com/iframe/96rKdX0J0t"
+            },
+            {
+                title: "Smile 2",
+                image: "https://media.themoviedb.org/t/p/original/bZQweCDilXNvF8KuaEHcghM3Nwf.jpg",
+                videoUrl: "https://tromcloud.com/iframe/zMGsLWmjfr"
+            },
+            {
+                title: "Deadpool & Wolverine",
+                image: "https://media.themoviedb.org/t/p/original/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg",
+                videoUrl: "https://tromcloud.com/iframe/dNP5fyxUfv"
+            },
+            {
+                title: "Alien: Romulus",
+                image: "https://media.themoviedb.org/t/p/original/xmDypImhT0OOloQIj3JLslUrBw8.jpg",
+                videoUrl: "https://tromcloud.com/iframe/UWjOPnQmPz"
+            },
+            {
+                title: "Twisters",
+                image: "https://media.themoviedb.org/t/p/original/EytpPm6ylyKcEeVLEhKY3VL2Gi.jpg",
+                videoUrl: "https://tromcloud.com/iframe/35YITzngJk"
+            },
+            {
+                title: "Sans un bruit : Jour 1",
+                image: "https://media.themoviedb.org/t/p/original/ymMaqwKN3Ovy9nlIRmk5GsnxEkx.jpg",
+                videoUrl: "https://tromcloud.com/iframe/UGRVpXmSIc"
+            },
+            {
+                title: "Bob Marley : One Love",
+                image: "https://media.themoviedb.org/t/p/original/1lQftpEARVVB9op4TaYiIbactzG.jpg",
+                videoUrl: "https://tromcloud.com/iframe/L3QerCOBCi"
+            },
+            {
+                title: "Oppenheimer",
+                image: "https://www.themoviedb.org/t/p/original/boAUuJBeID7VNp4L7LNMQs8mfQS.jpg",
+                videoUrl: "https://tromcloud.com/iframe/3cSEEHEDxr"
+            },
+            {
+                title: "Barbie",
+                image: "https://www.themoviedb.org/t/p/original/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg",
+                videoUrl: "https://tromcloud.com/iframe/g9YzmNl4Gr"
+            },
+            {
+                title: "Uncharted",
+                image: "https://www.themoviedb.org/t/p/original/yd12LPRc6X7dZvSMo57xbXVGk3G.jpg",
+                videoUrl: "https://tromcloud.com/iframe/5ex4ZyQRBY"
+            },
+            {
+                title: "Bad Boys : Ride or Die",
+                image: "https://media.themoviedb.org/t/p/original/yOhsdlCx592DPt3RPaYRrM3F64z.jpg",
+                videoUrl: "https://tromcloud.com/iframe/5t4FI5x7WW"
+            },
+            {
+                title: "Top Gun : Maverick",
+                image: "https://www.themoviedb.org/t/p/original/uuwi4wwG6HAHVqaEvJDx6gI773N.jpg",
+                videoUrl: "https://tromcloud.com/iframe/bUwwWKOQCX"
+            },
+            {
+                title: "Inception",
+                image: "https://www.themoviedb.org/t/p/original/aej3LRUga5rhgkmRP6XMFw3ejbl.jpg",
+                videoUrl: "https://tromcloud.com/iframe/cSEEOHdSFz"
+            },
+            {
+                title: "Les Évadés",
+                image: "https://media.themoviedb.org/t/p/original/t30GjttOdb5At1sYy8b3TOwFgWV.jpg",
+                videoUrl: "https://tromcloud.com/iframe/KjIA0SVIli"
+            },
+            {  
+                title: "The Dark Knight",
+                image: "https://www.themoviedb.org/t/p/original/pyNXnq8QBWoK3b37RS6C3axwUOy.jpg",
+                videoUrl: "https://tromcloud.com/iframe/103D76H7D2"
+            },
+            {  
+                title: "Your Name.",
+                image: "https://www.themoviedb.org/t/p/original/zyHjvVRgKOt9wgVx4ikp2kGArGF.jpg",
+                videoUrl: "https://tromcloud.com/iframe/PiYNXZmZ77"
+            },
+            {  
+                title: "Intouchables",
+                image: "https://www.themoviedb.org/t/p/original/8hZnsW4wGz3zuuwu9eniaoKIJnP.jpg",
+                videoUrl: "https://tromcloud.com/iframe/JFJj00hF0o"
+            },
+            {  
+                title: "La La Land",
+                image: "https://www.themoviedb.org/t/p/original/5KIj6aioW1UtUT1IV0qqW5iZbNH.jpg",
+                videoUrl: "https://tromcloud.com/iframe/qyqnTzckOg"
+            },
+            {  
+                title: "Le Voyage de Chihiro",
+                image: "https://www.themoviedb.org/t/p/original/12TAqK0AUgdcYE9ZYZ9r7ASbH5Q.jpg",
+                videoUrl: "https://tromcloud.com/iframe/KptnxWYWbq"
+            },
+            {  
+                title: "Avatar : La voie de l'eau",
+                image: "https://www.themoviedb.org/t/p/original/hYeB9GpFaT7ysabBoGG5rbo9mF4.jpg",
+                videoUrl: "https://tromcloud.com/iframe/xy3dDUerDg"
+            },
+            {  
+                title: "Fight Club",
+                image: "https://www.themoviedb.org/t/p/original/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+                videoUrl: "https://tromcloud.com/iframe/i1efUhaXnR"
+            },
+            {  
+                title: "Le Parrain",
+                image: "https://media.themoviedb.org/t/p/original/hj3vwgFZP0b9HxclXFW5wJL0UtD.jpg",
+                videoUrl: "https://tromcloud.com/iframe/illpTjRGtV"
+            },
+            {  
+                title: "Retour vers le futur",
+                image: "https://media.themoviedb.org/t/p/original/gggA0GBaFumhfZzRxOgyRk5Zob5.jpg",
+                videoUrl: "https://tromcloud.com/iframe/RgaT3ymeLC"
+            },
+            {  
+                title: "Titanic",
+                image: "https://www.themoviedb.org/t/p/original/vpsvHLkoeKUjceIMeNSqCp3xEyY.jpg",
+                videoUrl: "https://tromcloud.com/iframe/MNnGiduvwl"
+            },
+            {  
+                title: "Forrest Gump",
+                image: "https://www.themoviedb.org/t/p/original/A0Th0x8QIzP0njrFAJnYQ5ouIoB.jpg",
+                videoUrl: "https://tromcloud.com/iframe/4R4zedBbfc"
+            },
+            {  
+                title: "Venom : The Last Dance",
+                image: "https://media.themoviedb.org/t/p/original/aosm8NMQ3UyoBVpSxyimorCQykC.jpg",
+                videoUrl: "https://tromcloud.com/iframe/CMDrAXolHS"
+            },
+            {  
+                title: "Utopia",
+                image: "https://media.themoviedb.org/t/p/original/wYlge2Dhw4OSShMVaQv4lVffheu.jpg",
+                videoUrl: "https://tromcloud.com/iframe/rTSc7vhnMS"
+            },
+            {  
+                title: "La Plateforme",
+                image: "https://media.themoviedb.org/t/p/original/hromnWWeJCJTrFY7NXqFSduJmPc.jpg",
+                videoUrl: "https://tromcloud.com/iframe/2DRFabnVsX"
+            },
+            {  
+                title: "Jumanji : Bienvenue dans la jungle",
+                image: "https://media.themoviedb.org/t/p/original/cOsomItWDbdwlG6XJUYkiAWoFLW.jpg",
+                videoUrl: "https://tromcloud.com/iframe/M29g2xvtFO"
+            },
+            {  
+                title: "Very Bad Trip",
+                image: "https://www.themoviedb.org/t/p/original/dGOwVbGN5eJlgAnFwGRaANnyZMF.jpg",
+                videoUrl: "https://tromcloud.com/iframe/p9fBqhclhz"
+            },
+            {  
+                title: "Arrête-moi si tu peux",
+                image: "https://www.themoviedb.org/t/p/original/kBKinpkg20wdxjRYtzrJDJfytms.jpg",
+                videoUrl: "https://tromcloud.com/iframe/vre4RgCTfk"
+            },
+            {  
+                title: "Tyler Rake",
+                image: "https://www.themoviedb.org/t/p/original/qVHWs56TvXCKGjsmghWHFRqtKlF.jpg",
+                videoUrl: "https://tromcloud.com/iframe/TeSrMRvTbv"
+            },
+            {  
+                title: "Elvis",
+                image: "https://www.themoviedb.org/t/p/original/mTzwJL0ENwqIuMNGp2q6vkK3yis.jpg",
+                videoUrl: "https://tromcloud.com/iframe/TYmjZ1LKiD"
+            },
+            {  
+                title: "Free Guy",
+                image: "https://www.themoviedb.org/t/p/original/lG7Rv88OANLVbeR6Zymlid1cRuk.jpg",
+                videoUrl: "https://tromcloud.com/iframe/3w4dArvnbU"
+            },
+            {  
+                title: "Spider-Man : No Way Home",
+                image: "https://mediafiles.cineplex.com/Central/Film/Posters/36461_768_1024.jpg",
+                videoUrl: "https://tromcloud.com/iframe/fJgFq9Zjfl"
+            }
+        ];
+
+        const channels = [
+            {
+                name: "RMC DECOUVERTE",
+                logo: "https://upload.wikimedia.org/wikipedia/fr/b/b3/RMC_D%C3%A9couverte_logo_2017.svg",
+                url: "https://d2mt8for1pddy4.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-6uronj7gzvy4j/index.m3u8"
+            },
+            {
+                name: "RMC STORY",
+                logo: "https://upload.wikimedia.org/wikipedia/fr/3/3e/RMC_Story_logo_2018.svg",
+                url: "https://d36bxc1bknkxrk.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-3ewcp19zjaxpt/index.m3u8"
+            },
+            {
+                name: "RMC MYSTERE",
+                logo: "https://static-cdn.tv.sfr.net/data/img/apps/edito/attachment/animation/tile/imgcarre1000RMCMystere.jpg?h=380",
+                url: "https://d3w0weunrynif9.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-30cqeaahzofvb/index.m3u8"
+            },
+            {
+                name: "BFM TV",
+                logo: "https://upload.wikimedia.org/wikipedia/commons/b/b6/Logo_BFM_TV_%282019%29.png",
+                url: "https://d133u1kwyeqhav.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-cfh0ys5588w7f/index.m3u8"
+            },
+            {
+                name: "TF1",
+                logo: "https://www.1min30.com/wp-content/uploads/2018/01/Embl%C3%A8me-TF1.jpg",
+                url: "https://raw.githubusercontent.com/Paradise-91/ParaTV/main/streams/tf1plus/tf1.m3u8"
+            }
+        ];
+ 
+    function login(event) {
+        event.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorMessage = document.getElementById('errorMessage');
+
+        if (username === 'Admin' && password === 'Hichem') {
+            document.getElementById('loginPage').style.display = 'none';
+            document.querySelector('.navbar').style.display = 'flex';
+            document.querySelector('.hero').style.display = 'flex';
+            document.querySelector('.content').style.display = 'block';
+            showSection('home');
+            showPreviews();
+        } else {
+            errorMessage.textContent = 'Nom d\'utilisateur ou mot de passe incorrect';
+        }
+        return false;
+    }
+
+    function showSection(section) {
+        const hero = document.getElementById('hero');
+        const homeSection = document.getElementById('home');
+        const moviesSection = document.getElementById('movies');
+        const tvSection = document.getElementById('tv');
+
+        hero.style.display = section === 'home' ? 'flex' : 'none';
+        homeSection.style.display = section === 'home' ? 'block' : 'none';
+        moviesSection.style.display = section === 'movies' ? 'block' : 'none';
+        tvSection.style.display = section === 'tv' ? 'block' : 'none';
+
+        if (section === 'movies') {
+            filterContent('');
+        } else if (section === 'tv') {
+            showChannelsSection();
+        }
+    }
+
+    function createMovieCard(movie) {
+        return `
+            <div class="movie-card" onclick="playVideo('${movie.videoUrl}', false)">
+                <img src="${movie.image}" alt="${movie.title}">
+                <div class="movie-info">
+                    <div class="movie-title">${movie.title}</div>
+                    <button class="watch-btn">Regarder</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function createChannelCard(channel) {
+        return `
+            <div class="channel-card" onclick="playVideo('${channel.url}', true)">
+                <img src="${channel.logo}" alt="${channel.name}">
+                <div class="channel-info">
+                    <div class="channel-name">${channel.name}</div>
+                    <span class="live-badge">EN DIRECT</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function showChannelsSection() {
+        const tvSection = document.getElementById('tv');
+        tvSection.innerHTML = `
+            <h2>TV en Direct</h2>
+            <div class="grid" id="channelsGrid"></div>
+            <div class="see-more" style="margin-top: 30px;">
+                <button class="see-more-btn" onclick="openHuhuTV()">Voir toutes les chaînes du monde</button>
+            </div>
+        `;
+        
+        const channelsHTML = channels.map(createChannelCard).join('');
+        document.getElementById('channelsGrid').innerHTML = channelsHTML;
+    }
+
+    function openHuhuTV() {
+        const modal = document.getElementById('videoModal');
+        const videoContainer = document.getElementById('videoContainer');
+        
+        // Style du modal pour couvrir tout l'écran
+        modal.style.cssText = `
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            padding: 0;
+            margin: 0;
+        `;
+
+        // Contenu avec iframe et rectangle noir
+        videoContainer.innerHTML = `
+            <div style="position: relative; width: 100%; height: 100%;">
+                <iframe 
+                    src="https://huhu.to/"
+                    style="width: 100%; height: 100%; border: none;"
+                    allowfullscreen
+                    allow="fullscreen"
+                ></iframe>
+                <div style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 60px;
+                    background: #000;
+                    z-index: 10000;
+                    pointer-events: none;
+                "></div>
+            </div>
+        `;
+        
+        modal.classList.add('active');
+    }
+
+    function playVideo(url, isChannel) {
+        const modal = document.getElementById('videoModal');
+        const videoContainer = document.getElementById('videoContainer');
+        
+        if (isChannel) {
+            videoContainer.innerHTML = `
+                <video id="player" controls crossorigin playsinline>
+                    <source type="application/x-mpegURL" src="${url}">
+                </video>
+            `;
+            
+            const video = document.getElementById('player');
+            const defaultOptions = {
+                controls: [
+                    'play-large',
+                    'play',
+                    'progress',
+                    'current-time',
+                    'mute',
+                    'volume',
+                    'fullscreen'
+                ]
+            };
+
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    video.play();
+                });
+                const player = new Plyr(video, defaultOptions);
+            } else {
+                const player = new Plyr(video, defaultOptions);
+            }
+        } else {
+            videoContainer.innerHTML = `
+                <iframe 
+                    src="${url}"
+                    allowfullscreen
+                    frameborder="0"
+                    width="100%"
+                    height="100%"
+                ></iframe>
+            `;
+        }
+        
+        modal.style.display = 'block';
+        setTimeout(() => modal.classList.add('active'), 10);
+    }
+
+    function closeVideo() {
+        const modal = document.getElementById('videoModal');
+        const videoContainer = document.getElementById('videoContainer');
+        const player = document.querySelector('.plyr');
+        
+        if (player) {
+            player.remove();
+        }
+        
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            videoContainer.innerHTML = '';
+            modal.style = '';
+            videoContainer.style = '';
+        }, 300);
+    }
+
+    function filterContent(query) {
+        const moviesHTML = movies
+            .filter(movie => movie.title.toLowerCase().includes(query.toLowerCase()))
+            .map(createMovieCard)
+            .join('');
+        document.getElementById('moviesGrid').innerHTML = moviesHTML;
+
+        const channelsHTML = channels
+            .filter(channel => channel.name.toLowerCase().includes(query.toLowerCase()))
+            .map(createChannelCard)
+            .join('');
+        document.getElementById('channelsGrid').innerHTML = channelsHTML;
+    }
+
+    function showPreviews() {
+        const previewMovies = movies.slice(0, 5);
+        const moviesHTML = previewMovies.map(createMovieCard).join('');
+        document.getElementById('popularMoviesGrid').innerHTML = moviesHTML;
+
+        const previewChannels = channels.slice(0, 5);
+        const channelsHTML = previewChannels.map(createChannelCard).join('');
+        document.getElementById('popularChannelsGrid').innerHTML = channelsHTML;
+    }
+    </script>
+</body>
+</html>
